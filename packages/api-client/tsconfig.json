@@ -1,0 +1,4 @@
+{
+  "extends": "@pangu/tsconfig/base.json",
+  "include": ["src"]
+}

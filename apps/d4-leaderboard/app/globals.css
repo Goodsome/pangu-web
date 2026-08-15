@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@pangu/ui/styles.css";
+
+/* monorepo 内共享包中的类名需要显式声明来源（Tailwind v4 默认忽略 node_modules） */
+@source "../../../packages/ui/src";

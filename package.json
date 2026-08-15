@@ -1,0 +1,22 @@
+{
+  "name": "pangu-web",
+  "private": true,
+  "packageManager": "bun@1.2.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.0.0"
+  }
+}
