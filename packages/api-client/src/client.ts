@@ -1,10 +1,13 @@
 /**
  * pangu 后端 API 客户端（基于 fetch 的轻量封装）。
  *
- * 后端仓库位于 ../pangu（Python + uv workspace）。
+ * 后端仓库位于 ../pangu（Python + uv workspace），d4_backend 服务默认监听 :8000，
+ * 路由无 /api 前缀（如 GET /entries/）。
  * 环境变量约定：
- *   PANGU_API_BASE_URL - 后端 API 根地址，例如 http://localhost:8000/api
+ *   PANGU_API_BASE_URL - 后端 API 根地址，例如 http://localhost:8000
  */
+
+import type { Entry, Page, PlayerClass } from "./types";
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -71,8 +74,36 @@ export function createApiClient(options: ApiClientOptions) {
   };
 }
 
-export type ApiClient = ReturnType<typeof createApiClient>;
+export interface ListEntriesParams {
+  current?: number;
+  size?: number;
+  playerClass?: PlayerClass;
+}
 
-export const apiClient = createApiClient({
-  baseUrl: process.env.PANGU_API_BASE_URL ?? "http://localhost:8000/api",
+/** d4_leaderboard 榜单客户端 */
+export function createLeaderboardClient(options: ApiClientOptions) {
+  const http = createApiClient(options);
+
+  return {
+    /** 分页榜单（后端固定 tier DESC / duration ASC 排序） */
+    listEntries(params: ListEntriesParams = {}): Promise<Page<Entry>> {
+      const search = new URLSearchParams();
+      if (params.current !== undefined) search.set("current", String(params.current));
+      if (params.size !== undefined) search.set("size", String(params.size));
+      if (params.playerClass !== undefined) search.set("player_class", params.playerClass);
+      const qs = search.toString();
+      return http.get<Page<Entry>>(`/entries/${qs ? `?${qs}` : ""}`);
+    },
+
+    /** 单条榜条目（含完整 Build 快照） */
+    getEntry(id: string): Promise<Entry> {
+      return http.get<Entry>(`/entries/${id}`);
+    },
+  };
+}
+
+export type LeaderboardClient = ReturnType<typeof createLeaderboardClient>;
+
+export const apiClient = createLeaderboardClient({
+  baseUrl: process.env.PANGU_API_BASE_URL ?? "http://localhost:8000",
 });

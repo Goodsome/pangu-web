@@ -1,7 +1,29 @@
 export {
-  type ApiClient,
   type ApiClientOptions,
   ApiError,
   apiClient,
   createApiClient,
+  createLeaderboardClient,
+  type LeaderboardClient,
+  type ListEntriesParams,
 } from "./client";
+export type {
+  Affix,
+  AspectPower,
+  Entry,
+  Equipment,
+  EquipmentRarity,
+  Page,
+  ParagonBoard,
+  ParagonGlyph,
+  PlayerClass,
+  Skill,
+  SkillModifier,
+  Socket,
+  SocketKind,
+  TalismanAffix,
+  TalismanCharm,
+  TalismanSeal,
+  TalismanSnapshot,
+} from "./types";
+export { EquipmentSlot } from "./types";
