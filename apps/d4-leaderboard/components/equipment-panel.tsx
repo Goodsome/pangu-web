@@ -45,8 +45,8 @@ function EquipmentItem({ item }: { item: Equipment }) {
 
       {item.statlines.length > 0 && (
         <ul className="mt-2 space-y-0.5">
-          {item.statlines.map((affix) => (
-            <li key={affix.affix_id ?? affix.codename} className="text-sm">
+          {item.statlines.map((affix, index) => (
+            <li key={`${affix.affix_id ?? affix.codename}-${index}`} className="text-sm">
               {affix.stat_type}
               <AffixMarks
                 isGreater={affix.is_greater}
@@ -62,8 +62,8 @@ function EquipmentItem({ item }: { item: Equipment }) {
 
       {(item.sockets.length > 0 || item.aspect_power) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {item.sockets.map((socket) => (
-            <Badge key={socket.id} variant="outline" className="text-xs">
+          {item.sockets.map((socket, index) => (
+            <Badge key={`${socket.id}-${index}`} variant="outline" className="text-xs">
               {socket.kind === "gem" ? "💎" : " ᚱ"} {socket.codename}
             </Badge>
           ))}
@@ -87,8 +87,8 @@ export function EquipmentPanel({ equipment }: { equipment: Equipment[] }) {
   }
   return (
     <div className="grid gap-2 sm:grid-cols-2">
-      {equipment.map((item) => (
-        <EquipmentItem key={`${item.slot}-${item.item_id}`} item={item} />
+      {equipment.map((item, index) => (
+        <EquipmentItem key={`${item.slot}-${item.item_id}-${index}`} item={item} />
       ))}
     </div>
   );
