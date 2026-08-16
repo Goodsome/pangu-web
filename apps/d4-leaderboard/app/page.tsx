@@ -52,6 +52,12 @@ export default async function Home({ searchParams }: HomeProps) {
         <h1 className="text-2xl font-bold tracking-tight">大秘境排行榜</h1>
         <div className="flex items-baseline gap-4">
           <Link
+            href="/builds"
+            className="text-sm text-muted-foreground hover:underline underline-offset-4"
+          >
+            Build 分布 →
+          </Link>
+          <Link
             href="/affixes"
             className="text-sm text-muted-foreground hover:underline underline-offset-4"
           >

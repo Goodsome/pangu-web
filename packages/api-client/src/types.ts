@@ -175,6 +175,28 @@ export interface AffixDistribution {
   masterwork_crit: AffixDistributionItem[];
 }
 
+/** 技能组合 build 统计项（application/dtos/skill_build_distribution_dto.SkillBuildItem） */
+export interface SkillBuildItem {
+  /** build 签名（排序 codename 以 '+' 拼接） */
+  build_key: string;
+  /** 构成 build 的技能代号列表 */
+  skills: string[];
+  count: number;
+  /** 占命中条目数的百分比 (0-100) */
+  percentage: number;
+}
+
+/** 技能组合 build 分布统计结果（SkillBuildDistributionDto） */
+export interface SkillBuildDistribution {
+  player_class: PlayerClass | null;
+  min_tier: number;
+  /** 命中的榜单条目数（含无技能条目） */
+  entry_count: number;
+  /** 去重后的 build 数 */
+  build_count: number;
+  items: SkillBuildItem[];
+}
+
 /** 榜条目 = 一次通关记录 + Build 快照 */
 export interface Entry {
   id: string;

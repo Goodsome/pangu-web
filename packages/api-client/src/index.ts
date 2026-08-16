@@ -7,6 +7,7 @@ export {
   createLeaderboardClient,
   type LeaderboardClient,
   type ListEntriesParams,
+  type SkillBuildDistributionParams,
 } from "./client";
 export type {
   Affix,
@@ -21,6 +22,8 @@ export type {
   ParagonGlyph,
   PlayerClass,
   Skill,
+  SkillBuildDistribution,
+  SkillBuildItem,
   SkillModifier,
   Socket,
   SocketKind,

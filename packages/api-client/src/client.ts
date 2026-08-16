@@ -7,7 +7,14 @@
  *   PANGU_API_BASE_URL - 后端 API 根地址，例如 http://localhost:8000
  */
 
-import type { AffixDistribution, Entry, EquipmentSlot, Page, PlayerClass } from "./types";
+import type {
+  AffixDistribution,
+  Entry,
+  EquipmentSlot,
+  Page,
+  PlayerClass,
+  SkillBuildDistribution,
+} from "./types";
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -85,6 +92,14 @@ export interface AffixDistributionParams {
   slot?: EquipmentSlot;
   /** 最低层数（后端 ge=1 le=150，默认 100） */
   minTier?: number;
+  /** 技能组合 build 签名（见 skill-builds 接口） */
+  buildKey?: string;
+}
+
+export interface SkillBuildDistributionParams {
+  playerClass?: PlayerClass;
+  /** 最低层数（后端 ge=1 le=150，默认 1） */
+  minTier?: number;
 }
 
 /** d4_leaderboard 榜单客户端 */
@@ -107,14 +122,26 @@ export function createLeaderboardClient(options: ApiClientOptions) {
       return http.get<Entry>(`/entries/${id}`);
     },
 
-    /** 词缀选择分布：统计指定职业 / 部位 / 层数门槛下的词缀频次与占比 */
+    /** 词缀选择分布：统计指定职业 / 部位 / 层数门槛 / build 下的词缀频次与占比 */
     getAffixDistribution(params: AffixDistributionParams = {}): Promise<AffixDistribution> {
       const search = new URLSearchParams();
       if (params.playerClass !== undefined) search.set("player_class", params.playerClass);
       if (params.slot !== undefined) search.set("slot", String(params.slot));
       if (params.minTier !== undefined) search.set("min_tier", String(params.minTier));
+      if (params.buildKey !== undefined) search.set("build_key", params.buildKey);
       const qs = search.toString();
       return http.get<AffixDistribution>(`/entries/affix-distribution${qs ? `?${qs}` : ""}`);
+    },
+
+    /** 技能组合 build 分布：统计指定职业 / 层数门槛下各技能组合的使用频次 */
+    getSkillBuildDistribution(
+      params: SkillBuildDistributionParams = {},
+    ): Promise<SkillBuildDistribution> {
+      const search = new URLSearchParams();
+      if (params.playerClass !== undefined) search.set("player_class", params.playerClass);
+      if (params.minTier !== undefined) search.set("min_tier", String(params.minTier));
+      const qs = search.toString();
+      return http.get<SkillBuildDistribution>(`/entries/skill-builds${qs ? `?${qs}` : ""}`);
     },
   };
 }

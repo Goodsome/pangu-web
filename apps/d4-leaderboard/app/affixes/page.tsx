@@ -1,4 +1,4 @@
-import type { AffixDistribution, AffixDistributionItem } from "@pangu/api-client";
+import type { AffixDistribution, AffixDistributionItem, SkillBuildItem } from "@pangu/api-client";
 import { apiClient, EquipmentSlot, type PlayerClass } from "@pangu/api-client";
 import {
   Badge,
@@ -19,6 +19,9 @@ const MIN_TIERS = [100, 110, 120, 130, 140] as const;
 
 /** 每个分类最多展示的词缀条数 */
 const TOP_N = 15;
+
+/** Build 下拉可选项数量 */
+const BUILD_OPTIONS_N = 10;
 
 /** 职业与部位的默认选择 */
 const DEFAULT_CLASS: PlayerClass = "BARBARIAN";
@@ -56,7 +59,7 @@ const CATEGORIES = [
 ] as const;
 
 interface AffixesPageProps {
-  searchParams: Promise<{ class?: string; slot?: string; tier?: string }>;
+  searchParams: Promise<{ class?: string; slot?: string; tier?: string; build?: string }>;
 }
 
 export default async function AffixesPage({ searchParams }: AffixesPageProps) {
@@ -65,21 +68,47 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
   const parsedTier = Number.parseInt(params.tier ?? "", 10);
   const minTier = (MIN_TIERS as readonly number[]).includes(parsedTier) ? parsedTier : 100;
   const slot = parseEquipmentSlot(params.slot) ?? DEFAULT_SLOT;
+  const buildKey = params.build ? params.build : undefined;
 
   let data: AffixDistribution | null = null;
+  let buildOptions: SkillBuildItem[] = [];
   let error: string | null = null;
   try {
-    data = await apiClient.getAffixDistribution({ playerClass, slot, minTier });
+    // build 选项与词缀分布并行请求
+    const [affixResult, buildResult] = await Promise.all([
+      apiClient.getAffixDistribution({ playerClass, slot, minTier, buildKey }),
+      apiClient.getSkillBuildDistribution({ playerClass, minTier }),
+    ]);
+    data = affixResult;
+    buildOptions = [...buildResult.items]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, BUILD_OPTIONS_N);
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
 
-  const buildHref = (next: { class?: string; slot?: string; tier?: number }) => {
+  // 当前选中的 build 不在 Top 选项里时补进去，避免 select 显示空
+  if (buildKey && !buildOptions.some((b) => b.build_key === buildKey)) {
+    buildOptions = [
+      { build_key: buildKey, skills: buildKey.split("+"), count: 0, percentage: 0 },
+      ...buildOptions,
+    ];
+  }
+
+  const buildHref = (next: { class?: string; slot?: string; tier?: number; build?: string }) => {
     const qs = new URLSearchParams();
     qs.set("class", next.class ?? playerClass);
     qs.set("slot", next.slot ?? String(slot));
     const tier = next.tier ?? minTier;
     if (tier !== 100) qs.set("tier", String(tier));
+    // build 与职业绑定，切职业时丢弃
+    const nextBuild =
+      next.build !== undefined
+        ? next.build
+        : next.class !== undefined && next.class !== playerClass
+          ? undefined
+          : buildKey;
+    if (nextBuild) qs.set("build", nextBuild);
     return `/affixes?${qs.toString()}`;
   };
 
@@ -87,9 +116,20 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold tracking-tight">词缀分布</h1>
-        <Link href="/" className="text-sm text-muted-foreground hover:underline underline-offset-4">
-          ← 返回排行榜
-        </Link>
+        <div className="flex items-baseline gap-4">
+          <Link
+            href="/builds"
+            className="text-sm text-muted-foreground hover:underline underline-offset-4"
+          >
+            Build 分布 →
+          </Link>
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:underline underline-offset-4"
+          >
+            ← 返回排行榜
+          </Link>
+        </div>
       </div>
 
       {/* 筛选：职业 */}
@@ -122,6 +162,36 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
         ))}
       </section>
 
+      {/* 筛选：技能 Build */}
+      {buildOptions.length > 0 && (
+        <form action="/affixes" className="flex flex-wrap items-center gap-2">
+          <span className="w-12 text-sm text-muted-foreground">Build</span>
+          <input type="hidden" name="class" value={playerClass} />
+          <input type="hidden" name="slot" value={String(slot)} />
+          {minTier !== 100 && <input type="hidden" name="tier" value={String(minTier)} />}
+          <select
+            name="build"
+            defaultValue={buildKey ?? ""}
+            className="h-8 max-w-md truncate rounded-md border border-input bg-transparent px-2 text-sm shadow-xs"
+          >
+            <option value="">全部 Build</option>
+            {buildOptions.map((build) => (
+              <option key={build.build_key} value={build.build_key}>
+                {buildOptionLabel(build)}
+              </option>
+            ))}
+          </select>
+          <Button type="submit" variant="outline" size="sm">
+            应用
+          </Button>
+          {buildKey && (
+            <Button asChild variant="ghost" size="sm">
+              <Link href={buildHref({ build: undefined })}>清除</Link>
+            </Button>
+          )}
+        </form>
+      )}
+
       {error && (
         <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           无法连接后端服务（{error}）。请确认 d4_backend 已启动，且 PANGU_API_BASE_URL 配置正确。
@@ -136,6 +206,11 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
           </Badge>
           <Badge variant="outline">{slotLabel(slot)}</Badge>
           <Badge variant="outline">≥ {data.min_tier} 层</Badge>
+          {buildKey && (
+            <Badge variant="secondary" className="max-w-xs truncate font-normal">
+              Build: {buildKey.split("+").join(" + ")}
+            </Badge>
+          )}
         </p>
       )}
 
@@ -157,6 +232,12 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
 }
 
 type Category = (typeof CATEGORIES)[number];
+
+/** Build 下拉选项文案：技能代号拼接，过长截断 */
+function buildOptionLabel(build: SkillBuildItem): string {
+  const label = build.skills.join(" + ");
+  return label.length > 60 ? `${label.slice(0, 60)}…` : label;
+}
 
 function CategoryCard({ category, data }: { category: Category; data: AffixDistribution }) {
   const items = data[category.key];
