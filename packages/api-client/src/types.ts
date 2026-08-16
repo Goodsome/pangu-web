@@ -150,6 +150,31 @@ export interface TalismanSnapshot {
   charms: TalismanCharm[];
 }
 
+/** 词缀分布统计项（application/dtos/affix_distribution_dto.AffixDistributionItem） */
+export interface AffixDistributionItem {
+  codename: string;
+  stat_type: string;
+  count: number;
+  /** 占分母的百分比 (0-100) */
+  percentage: number;
+}
+
+/** 词缀分布统计结果（application/dtos/affix_distribution_dto.AffixDistributionDto） */
+export interface AffixDistribution {
+  player_class: PlayerClass | null;
+  slot: EquipmentSlot | null;
+  min_tier: number;
+  entry_count: number;
+  /** 命中的装备件数（innate/temper/transfigured 的分母） */
+  item_count: number;
+  /** 带精炼标记的装备件数（masterwork_crit 的分母） */
+  masterwork_item_count: number;
+  innate: AffixDistributionItem[];
+  temper: AffixDistributionItem[];
+  transfigured: AffixDistributionItem[];
+  masterwork_crit: AffixDistributionItem[];
+}
+
 /** 榜条目 = 一次通关记录 + Build 快照 */
 export interface Entry {
   id: string;

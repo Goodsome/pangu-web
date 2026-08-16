@@ -1,4 +1,5 @@
 export {
+  type AffixDistributionParams,
   type ApiClientOptions,
   ApiError,
   apiClient,
@@ -9,6 +10,8 @@ export {
 } from "./client";
 export type {
   Affix,
+  AffixDistribution,
+  AffixDistributionItem,
   AspectPower,
   Entry,
   Equipment,

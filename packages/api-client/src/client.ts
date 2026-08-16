@@ -7,7 +7,7 @@
  *   PANGU_API_BASE_URL - 后端 API 根地址，例如 http://localhost:8000
  */
 
-import type { Entry, Page, PlayerClass } from "./types";
+import type { AffixDistribution, Entry, EquipmentSlot, Page, PlayerClass } from "./types";
 
 export interface ApiClientOptions {
   baseUrl: string;
@@ -80,6 +80,13 @@ export interface ListEntriesParams {
   playerClass?: PlayerClass;
 }
 
+export interface AffixDistributionParams {
+  playerClass?: PlayerClass;
+  slot?: EquipmentSlot;
+  /** 最低层数（后端 ge=1 le=150，默认 100） */
+  minTier?: number;
+}
+
 /** d4_leaderboard 榜单客户端 */
 export function createLeaderboardClient(options: ApiClientOptions) {
   const http = createApiClient(options);
@@ -98,6 +105,16 @@ export function createLeaderboardClient(options: ApiClientOptions) {
     /** 单条榜条目（含完整 Build 快照） */
     getEntry(id: string): Promise<Entry> {
       return http.get<Entry>(`/entries/${id}`);
+    },
+
+    /** 词缀选择分布：统计指定职业 / 部位 / 层数门槛下的词缀频次与占比 */
+    getAffixDistribution(params: AffixDistributionParams = {}): Promise<AffixDistribution> {
+      const search = new URLSearchParams();
+      if (params.playerClass !== undefined) search.set("player_class", params.playerClass);
+      if (params.slot !== undefined) search.set("slot", String(params.slot));
+      if (params.minTier !== undefined) search.set("min_tier", String(params.minTier));
+      const qs = search.toString();
+      return http.get<AffixDistribution>(`/entries/affix-distribution${qs ? `?${qs}` : ""}`);
     },
   };
 }

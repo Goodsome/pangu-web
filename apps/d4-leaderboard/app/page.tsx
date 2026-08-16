@@ -50,11 +50,19 @@ export default async function Home({ searchParams }: HomeProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 p-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold tracking-tight">大秘境排行榜</h1>
-        {data && (
-          <p className="text-sm text-muted-foreground">
-            共 {data.total} 条记录 · 第 {data.current}/{totalPages} 页
-          </p>
-        )}
+        <div className="flex items-baseline gap-4">
+          <Link
+            href="/affixes"
+            className="text-sm text-muted-foreground hover:underline underline-offset-4"
+          >
+            词缀分布 →
+          </Link>
+          {data && (
+            <p className="text-sm text-muted-foreground">
+              共 {data.total} 条记录 · 第 {data.current}/{totalPages} 页
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

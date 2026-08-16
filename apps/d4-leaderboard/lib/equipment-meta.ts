@@ -23,6 +23,17 @@ export function slotLabel(slot: EquipmentSlot): string {
   return SLOT_LABELS[slot] ?? `槽位 ${slot}`;
 }
 
+export const EQUIPMENT_SLOTS = Object.keys(SLOT_LABELS).map(
+  (value) => Number(value) as EquipmentSlot,
+);
+
+/** 解析 URL 查询参数中的槽位值，非法时返回 undefined */
+export function parseEquipmentSlot(value: string | undefined): EquipmentSlot | undefined {
+  if (value === undefined) return undefined;
+  const slot = Number.parseInt(value, 10);
+  return Number.isInteger(slot) && slot in SLOT_LABELS ? (slot as EquipmentSlot) : undefined;
+}
+
 /** 稀有度徽章配色（完整类名字面量，保证被 Tailwind 扫描到） */
 const RARITY_STYLES: Record<EquipmentRarity, string> = {
   Normal: "bg-slate-500/15 text-slate-600 dark:text-slate-400",

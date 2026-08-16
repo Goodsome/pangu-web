@@ -3,7 +3,7 @@ import { Badge } from "@pangu/ui";
 
 import { rarityStyle, slotLabel } from "@/lib/equipment-meta";
 
-/** 词缀特殊标记：太古 / 回粹 / 重洗 / 魔改 / 精炼暴击 */
+/** 词缀特殊标记：太古 / 回火 / 重洗 / 嬗变 / 精炼 */
 function AffixMarks({
   isGreater,
   isTemper,
@@ -20,10 +20,10 @@ function AffixMarks({
   return (
     <span className="ml-1 gap-0.5">
       {isGreater && <sup className="text-amber-500">太古</sup>}
-      {isTemper && <sup className="text-sky-500">回粹</sup>}
+      {isTemper && <sup className="text-sky-500">回火</sup>}
       {isRerolled && <sup className="text-muted-foreground">重洗</sup>}
-      {isTransfigured && <sup className="text-fuchsia-500">魔改</sup>}
-      {isMasterworkCrit && <sup className="text-red-500">暴击</sup>}
+      {isTransfigured && <sup className="text-fuchsia-500">嬗变</sup>}
+      {isMasterworkCrit && <sup className="text-red-500">精炼</sup>}
     </span>
   );
 }
@@ -45,28 +45,35 @@ function EquipmentItem({ item }: { item: Equipment }) {
 
       {item.statlines.length > 0 && (
         <ul className="mt-2 space-y-0.5">
-          {item.statlines.map((affix, index) => (
-            <li key={`${affix.affix_id ?? affix.codename}-${index}`} className="text-sm">
-              {affix.stat_type}
-              <AffixMarks
-                isGreater={affix.is_greater}
-                isTemper={affix.is_temper}
-                isRerolled={affix.is_rerolled}
-                isTransfigured={affix.is_transfigured}
-                isMasterworkCrit={affix.is_masterwork_crit}
-              />
-            </li>
-          ))}
+          {item.statlines
+            .map((affix, idx) => ({
+              ...affix,
+              key: `${item.item_id}-affix-${affix.affix_id ?? affix.codename}-${idx}`,
+            }))
+            .map((affix) => (
+              <li key={affix.key} className="text-sm">
+                {affix.stat_type}
+                <AffixMarks
+                  isGreater={affix.is_greater}
+                  isTemper={affix.is_temper}
+                  isRerolled={affix.is_rerolled}
+                  isTransfigured={affix.is_transfigured}
+                  isMasterworkCrit={affix.is_masterwork_crit}
+                />
+              </li>
+            ))}
         </ul>
       )}
 
       {(item.sockets.length > 0 || item.aspect_power) && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {item.sockets.map((socket, index) => (
-            <Badge key={`${socket.id}-${index}`} variant="outline" className="text-xs">
-              {socket.kind === "gem" ? "💎" : " ᚱ"} {socket.codename}
-            </Badge>
-          ))}
+          {item.sockets
+            .map((socket, idx) => ({ ...socket, key: `${item.item_id}-socket-${idx}` }))
+            .map((socket) => (
+              <Badge key={socket.key} variant="outline" className="text-xs">
+                {socket.kind === "gem" ? "💎" : " ᚱ"} {socket.codename}
+              </Badge>
+            ))}
           {item.aspect_power && (
             <Badge
               variant="secondary"
@@ -87,8 +94,8 @@ export function EquipmentPanel({ equipment }: { equipment: Equipment[] }) {
   }
   return (
     <div className="grid gap-2 sm:grid-cols-2">
-      {equipment.map((item, index) => (
-        <EquipmentItem key={`${item.slot}-${item.item_id}-${index}`} item={item} />
+      {equipment.map((item) => (
+        <EquipmentItem key={`${item.slot}-${item.item_id}`} item={item} />
       ))}
     </div>
   );
