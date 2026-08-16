@@ -1,5 +1,5 @@
 import type { AffixDistribution, AffixDistributionItem } from "@pangu/api-client";
-import { apiClient } from "@pangu/api-client";
+import { apiClient, EquipmentSlot, type PlayerClass } from "@pangu/api-client";
 import {
   Badge,
   Button,
@@ -19,6 +19,10 @@ const MIN_TIERS = [100, 110, 120, 130, 140] as const;
 
 /** 每个分类最多展示的词缀条数 */
 const TOP_N = 15;
+
+/** 职业与部位的默认选择 */
+const DEFAULT_CLASS: PlayerClass = "BARBARIAN";
+const DEFAULT_SLOT = EquipmentSlot.HELM;
 
 const CATEGORIES = [
   {
@@ -57,10 +61,10 @@ interface AffixesPageProps {
 
 export default async function AffixesPage({ searchParams }: AffixesPageProps) {
   const params = await searchParams;
-  const playerClass = isPlayerClass(params.class) ? params.class : undefined;
+  const playerClass = isPlayerClass(params.class) ? params.class : DEFAULT_CLASS;
   const parsedTier = Number.parseInt(params.tier ?? "", 10);
   const minTier = (MIN_TIERS as readonly number[]).includes(parsedTier) ? parsedTier : 100;
-  const slot = parseEquipmentSlot(params.slot);
+  const slot = parseEquipmentSlot(params.slot) ?? DEFAULT_SLOT;
 
   let data: AffixDistribution | null = null;
   let error: string | null = null;
@@ -72,15 +76,11 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
 
   const buildHref = (next: { class?: string; slot?: string; tier?: number }) => {
     const qs = new URLSearchParams();
-    const cls = next.class !== undefined ? next.class : playerClass;
-    const nextSlot =
-      next.slot !== undefined ? next.slot : slot !== undefined ? String(slot) : undefined;
+    qs.set("class", next.class ?? playerClass);
+    qs.set("slot", next.slot ?? String(slot));
     const tier = next.tier ?? minTier;
-    if (cls) qs.set("class", cls);
-    if (nextSlot) qs.set("slot", nextSlot);
     if (tier !== 100) qs.set("tier", String(tier));
-    const search = qs.toString();
-    return search ? `/affixes?${search}` : "/affixes";
+    return `/affixes?${qs.toString()}`;
   };
 
   return (
@@ -95,9 +95,6 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
       {/* 筛选：职业 */}
       <section className="flex flex-wrap items-center gap-2">
         <span className="w-12 text-sm text-muted-foreground">职业</span>
-        <Button asChild variant={!playerClass ? "default" : "outline"} size="sm">
-          <Link href={buildHref({ class: undefined })}>全部</Link>
-        </Button>
         {PLAYER_CLASSES.map((cls) => (
           <Button key={cls} asChild variant={playerClass === cls ? "default" : "outline"} size="sm">
             <Link href={buildHref({ class: cls })}>{classMeta(cls).label}</Link>
@@ -108,9 +105,6 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
       {/* 筛选：部位 */}
       <section className="flex flex-wrap items-center gap-2">
         <span className="w-12 text-sm text-muted-foreground">部位</span>
-        <Button asChild variant={!slot ? "default" : "outline"} size="sm">
-          <Link href={buildHref({ slot: undefined })}>全部</Link>
-        </Button>
         {EQUIPMENT_SLOTS.map((s) => (
           <Button key={s} asChild variant={slot === s ? "default" : "outline"} size="sm">
             <Link href={buildHref({ slot: String(s) })}>{slotLabel(s)}</Link>
@@ -137,12 +131,10 @@ export default async function AffixesPage({ searchParams }: AffixesPageProps) {
       {data && (
         <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           命中 {data.entry_count} 条榜单记录 · {data.item_count} 件装备
-          {playerClass && (
-            <Badge variant="secondary" className={classMeta(playerClass).badge}>
-              {classMeta(playerClass).label}
-            </Badge>
-          )}
-          {slot !== undefined && <Badge variant="outline">{slotLabel(slot)}</Badge>}
+          <Badge variant="secondary" className={classMeta(playerClass).badge}>
+            {classMeta(playerClass).label}
+          </Badge>
+          <Badge variant="outline">{slotLabel(slot)}</Badge>
           <Badge variant="outline">≥ {data.min_tier} 层</Badge>
         </p>
       )}
